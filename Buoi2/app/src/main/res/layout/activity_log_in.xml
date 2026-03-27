@@ -92,7 +92,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="4dp" />
 
-                <EditText
+                <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etEmail"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -101,7 +101,7 @@
                     android:textColorHint="#8F9BB3"
                     android:textColor="#111827"
                     android:background="@drawable/custom_edt"
-                    android:padding="8dp"
+                    android:padding="12dp"
                     android:textSize="16sp" />
             </LinearLayout>
 
@@ -128,29 +128,26 @@
                     android:layout_width="match_parent"
                     android:layout_height="4dp" />
 
-                <FrameLayout
+                <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    app:endIconMode="password_toggle"
+                    app:endIconTint="#6C7278"
+                    app:hintEnabled="false">
 
-                    <EditText
+                    <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etPassword"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="@drawable/custom_edt"
-                        android:padding="8dp"
-                        android:paddingEnd="40dp"
                         android:hint="Input Password"
                         android:inputType="textPassword"
+                        android:padding="12dp"
+                        android:textColor="#000000"
+                        android:textColorHint="#8F9BB3"
                         android:textSize="16sp" />
-                    <ImageView
-                        android:id="@+id/ivEye"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_gravity="end|center_vertical"
-                        android:layout_marginEnd="8dp"
-                        android:padding="2dp"
-                        app:srcCompat="@drawable/ic_eye_off" />
-                </FrameLayout>
+
+                </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
             <Space
