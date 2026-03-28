@@ -5,25 +5,24 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
-    tools:context=".PasswordChangedActivity">
+    tools:context=".OpenSceneActivity">
 
     <androidx.constraintlayout.utils.widget.ImageFilterView
         android:id="@+id/iv_logo"
-        android:layout_width="@dimen/_168sdp"
-        android:layout_height="@dimen/_168sdp"
-        android:layout_marginTop="120dp"
+        android:layout_width="@dimen/_246sdp"
+        android:layout_height="@dimen/_246sdp"
+        android:layout_marginTop="106dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_logo" />
 
     <LinearLayout
-        android:id="@+id/llTitle"
+        android:id="@+id/ll_first_desc"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="@dimen/_28sdp"
-        android:layout_marginTop="@dimen/_32sdp"
+        android:layout_marginTop="@dimen/_34sdp"
         android:gravity="center"
         android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
@@ -33,10 +32,9 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Password changed"
+            android:text="Explore the app"
             android:textAlignment="center"
-            android:textColor="#4D3E3E"
-            android:textSize="@dimen/_24ssp"
+            android:textSize="@dimen/_28ssp"
             android:textStyle="bold" />
 
         <Space
@@ -46,26 +44,53 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Your password has been changed successfully"
+            android:text="Now your finances are in one place and always under control"
             android:textAlignment="center"
-            android:textColor="#666666"
             android:textSize="@dimen/_12ssp"
             android:textStyle="normal" />
     </LinearLayout>
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnBackToLogin"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="@dimen/_44sdp"
-        android:layout_marginTop="@dimen/_40sdp"
-        android:backgroundTint="@color/green"
-        android:text="Back to login"
-        android:textColor="#FFFFFF"
-        android:textSize="@dimen/_14ssp"
-        android:textStyle="bold"
-        app:cornerRadius="@dimen/_8sdp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/_28sdp"
+        android:layout_marginTop="@dimen/_56sdp"
+        android:gravity="center"
+        android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/llTitle" />
+        app:layout_constraintTop_toBottomOf="@+id/ll_first_desc">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLogIn"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/_45sdp"
+            android:text="Sign in"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="@dimen/_12ssp"
+            android:textStyle="bold"
+            app:backgroundTint="@color/green"
+            app:cornerRadius="@dimen/_8sdp" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/_12sdp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCreateAccount"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/_45sdp"
+            android:text="Create account"
+            android:textAllCaps="false"
+            android:textColor="@color/green"
+            android:textSize="@dimen/_12ssp"
+            android:textStyle="bold"
+            app:cornerRadius="@dimen/_8sdp"
+            app:strokeColor="@color/green"
+            app:strokeWidth="1dp" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

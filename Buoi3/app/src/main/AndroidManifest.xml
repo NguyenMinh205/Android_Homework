@@ -29,10 +29,10 @@
             android:name=".SignUpActivity"
             android:exported="false" />
         <activity
-            android:name=".OpenSceneActivity"
+            android:name=".LogInActivity"
             android:exported="false" />
         <activity
-            android:name=".LogInActivity"
+            android:name=".OpenSceneActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
