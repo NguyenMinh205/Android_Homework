@@ -84,6 +84,7 @@ Bất kỳ ứng dụng Android nào cũng được xây dựng từ 4 khối th
         android:layout_width="0dp"          android:layout_height="wrap_content"
         android:layout_weight="1"           android:layout_marginStart="8dp"    android:text="Đồng ý"
         android:backgroundTint="#4CAF50" /> </LinearLayout>
+```
 
 ### 2.2. ConstraintLayout (Bố cục ràng buộc)
 
@@ -148,6 +149,7 @@ Khi một View được neo vào cả hai bên (trái và phải, hoặc trên v
         app:layout_constraintStart_toEndOf="@+id/imgAvatar" app:layout_constraintEnd_toEndOf="parent"          app:layout_constraintTop_toTopOf="@+id/imgAvatar"    app:layout_constraintBottom_toBottomOf="@+id/imgAvatar" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+```
 
 ### 2.3. FrameLayout (Bố cục xếp lớp)
 
@@ -192,6 +194,7 @@ Trong thực tế, không ai dùng FrameLayout để dàn các màn hình có nh
         android:indeterminateTint="#FFFFFF" />
 
 </FrameLayout>
+```
 
 ### 2.4. ScrollView / NestedScrollView (Bố cục cuộn)
 
@@ -257,6 +260,7 @@ Trong thực tế, không ai dùng FrameLayout để dàn các màn hình có nh
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>
+```
 
 ## 3. Tối ưu thao tác với XML (ViewBinding)
 
@@ -277,6 +281,7 @@ android {
         viewBinding = true
     }
 }
+```
 
 **Bước 2: Sử dụng trong Activity**
 ```groovy
@@ -299,6 +304,7 @@ class MainActivity : AppCompatActivity() {
             // Xử lý sự kiện click
         }
     }
+```
 
 ## 4. Hệ thống Phản hồi người dùng (User Feedback)
 
@@ -312,3 +318,66 @@ Trong thiết kế UX/UI, khi một sự kiện nền xảy ra (lưu dữ liệu
   ```kotlin
   Toast.makeText(this, "Đang tải dữ liệu...", Toast.LENGTH_SHORT).show()
 }
+```
+
+### 4.2. Snackbar (Chuẩn mực Material Design)
+* **Bản chất:** Là bản nâng cấp trực tiếp của Toast, hiển thị một thanh thông báo từ cạnh đáy màn hình lên, tuân thủ nghiêm ngặt ngôn ngữ thiết kế Material Design của Google.
+* **Ưu điểm cốt lõi (Trọng tâm phỏng vấn):**
+  1. **Tính tương tác (Action):** Cho phép nhúng một nút hành động để người dùng "chuộc lỗi" (Ví dụ điển hình: Hiển thị Snackbar "Đã xóa email" kèm theo nút "Hoàn tác - Undo").
+  2. **Trải nghiệm người dùng (Swipe-to-dismiss):** Người dùng không cần chờ nó tự tắt mà có thể chủ động vuốt ngang để loại bỏ thông báo ngay lập tức.
+* **Cú pháp:**
+  ```kotlin
+  Snackbar.make(binding.root, "Đã xóa tệp tin thành công", Snackbar.LENGTH_LONG)
+      .setAction("Hoàn tác") {
+          // Logic khôi phục lại tệp tin vừa xóa
+      }.show()
+```
+
+### 4.3. AlertDialog (Hộp thoại cảnh báo - Chặn luồng)
+* **Bản chất:** Là một cửa sổ (Modal) bật lên ở trung tâm màn hình, tự động làm mờ phông nền phía sau và **chặn toàn bộ thao tác** (Focus-stealing) của người dùng đối với Activity hiện tại cho đến khi họ đưa ra quyết định.
+* **Quy tắc sử dụng:** Chỉ được phép sử dụng cho những tác vụ **mang tính phá hủy, không thể vãn hồi hoặc cực kỳ quan trọng** (Ví dụ: Xác nhận Xóa vĩnh viễn tài khoản, Thanh toán đơn hàng, Đăng xuất).
+* **Cấu trúc:** Gồm Tiêu đề (Title), Nội dung chi tiết (Message) và tối đa 3 nút bấm (Positive - Khẳng định, Negative - Phủ định, Neutral - Trung lập).
+* **Cú pháp:**
+  ```kotlin
+  AlertDialog.Builder(this)
+      .setTitle("Cảnh báo bảo mật")
+      .setMessage("Bạn có chắc chắn muốn xóa toàn bộ dữ liệu hệ thống không?")
+      .setPositiveButton("Xóa ngay") { dialog, _ -> 
+          // Thực thi lệnh xóa
+      }
+      .setNegativeButton("Hủy bỏ") { dialog, _ -> 
+          dialog.dismiss() // Đóng hộp thoại an toàn
+      }
+      .setCancelable(false) // Buộc người dùng phải chọn nút, không cho bấm ra viền ngoài để tắt
+      .show()
+  ```
+
+  ### 4.4. BottomSheetDialog (Cửa sổ trượt từ đáy - UX Hiện đại)
+* **Bản chất:** Một cửa sổ tương tác trượt mượt mà từ dưới mép đáy màn hình lên. Khác với sự can thiệp thô bạo của `AlertDialog`, `BottomSheetDialog` mang lại cảm giác chuyển đổi bối cảnh nhẹ nhàng hơn rất nhiều.
+* **Ưu điểm UX (Trọng tâm thiết kế hiện đại):** * Nằm hoàn toàn trong vùng **"Thumb-friendly area" (Vùng thân thiện với ngón tay cái)**, cực kỳ tối ưu cho thao tác bằng một tay trên các dòng smartphone tỷ lệ màn hình dài (18:9, 20:9) hiện nay.
+  * Hỗ trợ cử chỉ vuốt (Swipe down) để đóng một cách tự nhiên.
+* **Ứng dụng thực tế:** Thường được sử dụng để thay thế cho các Menu dạng Dropdown (thả xuống) cũ kỹ, hoặc chứa một danh sách tùy chọn nâng cao (Ví dụ: Menu Chia sẻ lên mạng xã hội, Bảng chọn màu sắc/kích cỡ sản phẩm trên các app E-commerce).
+* **Cú pháp / Ví dụ thực chiến:**
+  Để tạo một `BottomSheetDialog`, bạn thường tự thiết kế một file XML riêng (ví dụ: `layout_bottom_sheet_share.xml`), sau đó dùng code Kotlin để nạp nó lên và bắt sự kiện:
+  
+  ```kotlin
+  // 1. Khởi tạo đối tượng BottomSheetDialog (Context là 'this' nếu gọi trong Activity)
+  val bottomSheetDialog = BottomSheetDialog(this)
+  
+  // 2. Nạp giao diện XML tự thiết kế vào Dialog
+  val view = layoutInflater.inflate(R.layout.layout_bottom_sheet_share, null)
+  bottomSheetDialog.setContentView(view)
+  
+  // 3. Xử lý sự kiện click cho các thành phần bên trong BottomSheet
+  val btnShareFacebook = view.findViewById<LinearLayout>(R.id.btnShareFacebook)
+  btnShareFacebook.setOnClickListener {
+      // Xử lý logic chia sẻ
+      Toast.makeText(this, "Đang chia sẻ...", Toast.LENGTH_SHORT).show()
+      
+      // Đóng BottomSheet sau khi người dùng đã chọn xong
+      bottomSheetDialog.dismiss() 
+  }
+  
+  // 4. Hiển thị BottomSheet lên màn hình
+  bottomSheetDialog.show()
+```
