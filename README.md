@@ -315,7 +315,7 @@ Trong thiết kế UX/UI, khi một sự kiện nền xảy ra (lưu dữ liệu
 * **Mục đích sử dụng:** Chủ yếu dùng để **Debug mã nguồn** cho lập trình viên, hoặc thông báo các lỗi vặt không mang tính quyết định ("Bấm Back lần nữa để thoát"). 
 * **Lưu ý thiết kế:** Trong các ứng dụng thương mại hiện đại, Toast đang dần bị hạn chế do không thể tùy biến giao diện linh hoạt và thiếu tính tương tác.
 * **Cú pháp:**
-  ```kotlin
+```kotlin
   Toast.makeText(this, "Đang tải dữ liệu...", Toast.LENGTH_SHORT).show()
 }
 ```
