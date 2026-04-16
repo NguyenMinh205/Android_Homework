@@ -3,6 +3,7 @@ package com.example.buoi5
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -35,11 +36,7 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Bạn đang gọi ${contact.name} - ${contact.phone}", Toast.LENGTH_SHORT).show()
             },
             onDeleteClick = { position ->
-                val name = contacts[position].name
-                contacts.removeAt(position)
-                adapter.notifyItemRemoved(position)
-                adapter.notifyItemRangeChanged(position, contacts.size)
-                Toast.makeText(this, "Đã xóa $name", Toast.LENGTH_SHORT).show()
+                showDeleteConfirmDialog(position)
             }
         )
 
@@ -49,6 +46,22 @@ class MainActivity : AppCompatActivity() {
         binding.btnAdd.setOnClickListener {
             validateAndAddContact()
         }
+    }
+
+    private fun showDeleteConfirmDialog(position: Int) {
+        val contact = contacts[position]
+        AlertDialog.Builder(this)
+            .setTitle("Xác nhận xóa")
+            .setMessage("Bạn có chắc chắn muốn xóa liên lạc '${contact.name}' không?")
+            .setPositiveButton("Xóa") { _, _ ->
+                val name = contact.name
+                contacts.removeAt(position)
+                adapter.notifyItemRemoved(position)
+                adapter.notifyItemRangeChanged(position, contacts.size)
+                Toast.makeText(this, "Đã xóa $name", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Hủy", null)
+            .show()
     }
 
     private fun validateAndAddContact() {
@@ -77,7 +90,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (!isValidPhone(phone)) {
-            binding.tilPhone.error = "Số điện thoại phải có từ 10-11 chữ số"
+            binding.tilPhone.error = "Số điện thoại không đúng định dạng"
             binding.edtPhone.requestFocus()
             return
         }
