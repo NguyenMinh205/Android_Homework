@@ -272,7 +272,7 @@ Sử dụng `findViewById()` tiềm ẩn hai rủi ro "chết người" khiến 
 * **Null-safe (An toàn với Null):** ViewBinding tạo ra tham chiếu trực tiếp đến các View dựa trên ID. Bạn không thể gọi một ID không tồn tại hoặc gọi nhầm ID của một Layout khác, loại bỏ hoàn toàn lỗi `NullPointerException`.
 * **Type-safe (An toàn kiểu dữ liệu):** Các trường (fields) trong class Binding được định nghĩa sẵn đúng với kiểu View trong XML (Ví dụ: Thẻ `<TextView>` sẽ được map chuẩn xác thành class `TextView` trong Kotlin). Bạn không cần ép kiểu thủ công, loại bỏ lỗi `ClassCastException`.
 
-#### 3. Cấu hình và Cú pháp thực chiến
+#### 3. Cấu hình
 **Bước 1: Kích hoạt trong file `build.gradle` (cấp độ App)**
 ```groovy
 android {
@@ -326,7 +326,7 @@ Trong thiết kế UX/UI, khi một sự kiện nền xảy ra (lưu dữ liệu
   1. **Tính tương tác (Action):** Cho phép nhúng một nút hành động để người dùng "chuộc lỗi" (Ví dụ điển hình: Hiển thị Snackbar "Đã xóa email" kèm theo nút "Hoàn tác - Undo").
   2. **Trải nghiệm người dùng (Swipe-to-dismiss):** Người dùng không cần chờ nó tự tắt mà có thể chủ động vuốt ngang để loại bỏ thông báo ngay lập tức.
 * **Cú pháp:**
-  ```kotlin
+```kotlin
   Snackbar.make(binding.root, "Đã xóa tệp tin thành công", Snackbar.LENGTH_LONG)
       .setAction("Hoàn tác") {
           // Logic khôi phục lại tệp tin vừa xóa
@@ -360,7 +360,7 @@ Trong thiết kế UX/UI, khi một sự kiện nền xảy ra (lưu dữ liệu
 * **Cú pháp / Ví dụ thực chiến:**
   Để tạo một `BottomSheetDialog`, bạn thường tự thiết kế một file XML riêng (ví dụ: `layout_bottom_sheet_share.xml`), sau đó dùng code Kotlin để nạp nó lên và bắt sự kiện:
   
-  ```kotlin
+```kotlin
   // 1. Khởi tạo đối tượng BottomSheetDialog (Context là 'this' nếu gọi trong Activity)
   val bottomSheetDialog = BottomSheetDialog(this)
   
@@ -381,3 +381,254 @@ Trong thiết kế UX/UI, khi một sự kiện nền xảy ra (lưu dữ liệu
   // 4. Hiển thị BottomSheet lên màn hình
   bottomSheetDialog.show()
 ```
+
+## 2. Hệ điều hành & Thành phần Cốt lõi
+
+### 2.1. Context (Ngữ cảnh)
+* **Bản chất:** `Context` là chiếc thẻ định danh (interface) cung cấp thông tin về môi trường hiện tại của ứng dụng. Nó là "giấy thông hành" bắt buộc để truy cập vào tài nguyên hệ thống (như String, Drawable), khởi chạy Activity, hoặc thao tác với Database.
+* **Context cho phép bạn**
+  - Load ảnh, âm thanh, string từ res
+  - Hiện Toast, Dialog, Snackbar
+  - Mở Activity mới
+  - Truy cập SharedPreferences, Database
+  - Gọi các Service hệ thống (GPS, Camera...)
+* **Câu hỏi phỏng vấn: Phân biệt các loại Context & Lỗi Memory Leak:**
+  1. **Activity Context (`this`):** * *Vòng đời:* Gắn liền với màn hình (Activity) hiện tại. Khi màn hình bị hủy, Context này cũng bị hủy theo.
+     * *Khi nào dùng:* Chỉ dùng cho các thao tác liên quan trực tiếp đến giao diện (UI) như: Hiển thị `Toast`, show `AlertDialog`, hoặc `LayoutInflater`.
+     * *Hiểm họa rò rỉ bộ nhớ (Memory Leak):* Nếu bạn truyền Activity Context vào một tác vụ chạy ngầm (Background Thread) mất 10 phút mới xong, mà người dùng lại thoát màn hình ở phút thứ 2, thì màn hình đó **không thể bị thu hồi bộ nhớ (Garbage Collector không thể xóa)** vì tác vụ ngầm vẫn đang giữ Context của nó.
+  2. **Application Context (`applicationContext`):**
+     * *Vòng đời:* Gắn liền với toàn bộ ứng dụng. Ứng dụng còn sống thì nó còn tồn tại.
+     * *Khi nào dùng:* Dùng để khởi tạo các đối tượng dùng chung (Singleton) hoặc các thư viện hoạt động xuyên suốt app như: Room Database, Retrofit (gọi API), Shared Preferences.
+* **Tại sao phải phân biệt Activity Context và Application Context?**
+* **Activity Context (Chứa Window Token):**
+* *Lý thuyết:* Mỗi Activity khi sinh ra sẽ được hệ điều hành cấp một cái vé gọi là `Window Token` để được phép vẽ giao diện lên màn hình. `Toast`, `Dialog` hay `LayoutInflator` đều yêu cầu phải có `Window Token` này mới vẽ được.
+* *Ví dụ ứng dụng:* Nếu bạn cố tình dùng `Application Context` để gọi hàm `show()` một cái `AlertDialog`, ứng dụng sẽ văng ngay lập tức với lỗi `BadTokenException` vì Application Context không hề có `Window Token` để vẽ UI.
+* **Application Context (Tuổi thọ toàn cục):**
+* *Lý thuyết:* Trực thuộc tiến trình (Process) của ứng dụng. 
+* *Ví dụ ứng dụng:* Bạn đang tải một file 1GB chạy ngầm (Background Service). Tiến trình tải này cần một Context để ghi file vào bộ nhớ máy. Bắt buộc phải truyền `Application Context`, vì nếu truyền `Activity Context`, khi người dùng thoát màn hình đó, Context bị thu hồi, tiến trình tải file sẽ bị lỗi và gây ra Memory Leak.
+
+---
+
+### 2.2. Intent & Truyền dữ liệu (Payload)
+`Intent` không chỉ dùng để chuyển màn hình, mà còn đóng vai trò là "người đưa thư" mang theo dữ liệu (gọi là Payload hoặc Extras).
+
+* **Truyền dữ liệu nguyên thủy (Primitive Types):**
+  * Hỗ trợ các kiểu cơ bản: `String`, `Int`, `Boolean`, `Float`,...
+  * *Cú pháp truyền:* `intent.putExtra("KEY_NAME", "Nguyễn Quang Minh")`
+  * *Cú pháp nhận:* `intent.getStringExtra("KEY_NAME")`
+* **Truyền đối tượng (Object - Điểm phân loại ứng viên):**
+  * Không thể ném trực tiếp một Object (ví dụ: class `User`) vào Intent. Nó phải được "đóng gói" lại.
+  * **Serializable (Java cũ):** Đã lỗi thời. Nó dùng cơ chế Reflection để quét các biến trong class, quá trình này tạo ra rác bộ nhớ (Garbage) cực nhiều và làm tốc độ chuyển màn hình bị chậm.
+  * **Parcelable (Chuẩn mực Android):** Bắt buộc phải dùng. Đây là cơ chế đóng gói được Google tối ưu hóa sâu ở tầng C/C++ cho Android, tốc độ đọc/ghi cực kỳ nhanh.
+  * **Kotlin `@Parcelize`:** Ngày xưa viết class Parcelable mất cả trăm dòng code, hiện tại Kotlin hỗ trợ annotation `@Parcelize` giúp thu gọn mọi thứ thành 1 dòng:
+    ```kotlin
+    @Parcelize
+    data class User(val id: Int, val name: String) : Parcelable
+    
+    // Truyền đi: intent.putExtra("USER_DATA", userObj)
+    // Nhận về (Android 13+): intent.getParcelableExtra("USER_DATA", User::class.java)
+    ```
+
+---
+
+### 2.3. Lifecycle (Vòng đời) & Tương tác API
+Đây là kiến thức sống còn để app không bị Crash (văng) khi làm việc với Backend (gọi API).
+
+* **Mô hình Vòng đời cơ bản:**
+  * **`onCreate()`**: Hàm duy nhất chạy 1 lần. Chuyên dùng để khởi tạo `ViewBinding`, thiết lập Adapter cho RecyclerView. Đây cũng là nơi lý tưởng để **bắt đầu gọi API lấy dữ liệu lần đầu tiên**.
+  * **`onStart()`**: Giao diện hiển thị, nhưng chưa thể bấm chạm.
+  * **`onResume()`**: Trạng thái Foreground. App đang tương tác trực tiếp với người dùng.
+  * **`onPause()`**: Màn hình bị che khuất một phần (Ví dụ: Dialog hiển thị lên). **Bắt buộc:** Tạm dừng các UI update hao tài nguyên (hoạt ảnh, video).
+  * **`onStop()`**: Màn hình bị che lấp 100% (Ví dụ: Bấm phím Home).
+  * **`onDestroy()`**: Màn hình bị hệ thống tiêu diệt. 
+
+* **Quy tắc khi gọi API (Tránh văng app):**
+  * Giả sử bạn ở `onCreate()`, bạn gọi một API lấy danh sách User mất 5 giây. Nhưng ở giây thứ 2, người dùng bấm nút Back để thoát màn hình (Activity bị đưa vào `onDestroy()`).
+  * Ở giây thứ 5, API trả data về, code của bạn chạy lệnh `binding.textView.text = data`. 
+  * **Hậu quả:** Ứng dụng Crash ngay lập tức (NullPointerException / View is dead) vì nó cố gắng cập nhật giao diện trên một Activity đã chết.
+  * **Cách giải quyết:** Bất kỳ thao tác gọi API hoặc Background Thread nào cũng **bắt buộc phải bị hủy (Cancel)** trong hàm `onDestroy()`. (Hiện nay, nếu dùng Kotlin Coroutines với `lifecycleScope` hoặc `viewModelScope`, hệ thống sẽ tự động làm việc hủy này cho bạn).
+ 
+### 2.4. Xử Lý Sự Kiện (Event Handling) - Tư duy Thực chiến & Tối ưu Hiệu năng
+
+Thay vì chỉ ghi nhớ cú pháp lệnh, điều làm nên sự khác biệt của một lập trình viên giỏi là khả năng kiểm soát **dòng chảy (luồng) của sự kiện** và ngăn chặn triệt để các rủi ro về UX (Trải nghiệm người dùng) cũng như Hiệu năng.
+
+#### 2.4.1. Bản chất hệ thống: Cơ chế Tiêu thụ sự kiện (Event Consumption)
+* **Câu hỏi phỏng vấn xoáy:** Tại sao các hàm như `setOnLongClickListener` (Nhấn giữ) hay `setOnTouchListener` (Chạm vuốt) lại bắt buộc phải `return true` hoặc `false` ở cuối hàm?
+* **Bản chất kiến trúc (Under the hood):** Android sử dụng cơ chế truyền sự kiện theo dạng chuỗi. Khi người dùng chạm vào màn hình, sự kiện sẽ đi từ lớp vỏ ngoài cùng (Activity) -> Xuyên qua Layout cha -> Đến Nút bấm con.
+  * Nếu bạn `return true`: Hệ thống hiểu là *"Tôi đã xử lý trọn vẹn sự kiện này rồi, hãy ngắt luồng đi"*. 
+  * Nếu bạn `return false`: Hệ thống hiểu là *"Tôi mới chỉ xem qua thôi, chưa xử lý triệt để"*. Sự kiện này sẽ tiếp tục **trào ngược (bubble up)**. Hệ quả: Nút bấm của bạn sẽ vừa chạy code của hàm Nhấn Giữ, lại vừa chạy luôn cả hàm Nhấn Thường (`onClick`), gây ra lỗi logic nghiêm trọng.
+
+#### 2.4.2 Click Event — Sự Kiện Nhấn
+
+**Cách 1: Dùng lambda (khuyến nghị)**
+
+```kotlin
+// Trong Activity
+btnLogin.setOnClickListener {
+    // Xử lý khi người dùng nhấn nút
+    Toast.makeText(this, "Đã nhấn Đăng Nhập!", Toast.LENGTH_SHORT).show()
+}
+```
+
+**Cách 2: Implement interface**
+
+```kotlin
+class MainActivity : AppCompatActivity(), View.OnClickListener {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        btnLogin.setOnClickListener(this)
+        btnRegister.setOnClickListener(this)
+    }
+
+    override fun onClick(view: View) {
+        when (view.id) {
+            R.id.btnLogin    -> handleLogin()
+            R.id.btnRegister -> handleRegister()
+        }
+    }
+}
+```
+
+**Cách 3: Khai báo trong XML (ít dùng)**
+
+```xml
+<Button
+    android:onClick="handleLogin"
+    ... />
+```
+
+```kotlin
+// Trong Activity — tên hàm phải khớp với XML
+fun handleLogin(view: View) {
+    // ...
+}
+```
+
+#### 2.4.3 Long Click Event — Nhấn Giữ
+
+```kotlin
+btnDelete.setOnLongClickListener {
+    Toast.makeText(this, "Nhấn giữ để xoá", Toast.LENGTH_SHORT).show()
+    true  // true = đã xử lý, không tiếp tục truyền sự kiện
+}
+```
+
+#### 2.4.4 Touch Event — Sự Kiện Chạm
+
+```kotlin
+view.setOnTouchListener { v, event ->
+    when (event.action) {
+        MotionEvent.ACTION_DOWN -> { /* Bắt đầu chạm */ }
+        MotionEvent.ACTION_MOVE -> { /* Đang di chuyển */ }
+        MotionEvent.ACTION_UP   -> { /* Nhấc tay lên */ }
+    }
+    true
+}
+```
+
+#### 2.4.5 Text Change — Theo Dõi Thay Đổi Text
+
+```kotlin
+etSearch.addTextChangedListener(object : TextWatcher {
+    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+        // Trước khi text thay đổi
+    }
+
+    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+        // Trong khi text đang thay đổi — dùng nhiều nhất
+        performSearch(s.toString())
+    }
+
+    override fun afterTextChanged(s: Editable?) {
+        // Sau khi text đã thay đổi
+    }
+})
+```
+
+#### 2.4.6 Focus Change — Thay Đổi Focus
+
+```kotlin
+etEmail.setOnFocusChangeListener { view, hasFocus ->
+    if (hasFocus) {
+        tilEmail.error = null  // Xoá lỗi khi người dùng bắt đầu nhập
+    } else {
+        // Validate khi rời focus
+        if (etEmail.text.isNullOrEmpty()) {
+            tilEmail.error = "Email không được trống"
+        }
+    }
+}
+```
+---
+
+### 2.5. Giao tiếp 2 chiều (ActivityResultLauncher)
+**A. Tại sao Google "khai tử" `startActivityForResult` cũ?**
+* *Lý thuyết điểm yếu cũ:* Hệ thống cũ gắn chặt logic lắng nghe kết quả vào hàm `onActivityResult()` của Activity. Nếu màn hình A gọi màn hình B (ví dụ mở Camera), nhưng điện thoại yếu RAM, HĐH tạm thời giết màn hình A. Khi B chụp xong quay lại, màn hình A được phục hồi nhưng kết quả có nguy cơ bị mất hoặc xử lý sai luồng.
+* *Bản chất hệ thống mới:* `ActivityResultLauncher` sử dụng cơ chế **Registry (Đăng ký)**. Bạn đăng ký một hợp đồng (Contract) với hệ thống từ trước. Cho dù màn hình A có bị giết và phục hồi lại, hệ thống vẫn nhớ cái hợp đồng đó và trả kết quả về đúng chỗ.
+
+**B. Ví dụ ứng dụng thực tế:**
+* **Flow Đăng nhập Google/Facebook:** Bấm nút "Login via Google" -> Mở màn hình của Google lên -> Người dùng xác thực vân tay -> Google trả về một chuỗi Token -> `ActivityResultLauncher` bắt lấy chuỗi Token đó để đăng nhập vào app.
+* **Thay đổi Avatar:** Bấm vào Avatar -> Gọi Intent mở thư viện ảnh (`ACTION_PICK`) -> Người dùng chọn ảnh -> Launcher bắt lấy đường dẫn URI của ảnh -> Đẩy lên Image/Glide để hiển thị.
+
+---
+
+### 2.6. Điều Hướng Ứng Dụng (Navigation Component) - Kỷ nguyên Single-Activity
+
+Nếu `ConstraintLayout` là chuẩn mực của vẽ giao diện, thì **Jetpack Navigation Component** chính là chuẩn mực tối thượng của kiến trúc luân chuyển màn hình hiện đại. Nó sinh ra để hiện thực hóa triết lý **Single-Activity Architecture** (Ứng dụng chỉ có 1 Activity duy nhất, mọi màn hình khác đều là Fragment luân chuyển bên trong).
+
+#### 1. Nỗi đau của quá khứ (Tại sao khai tử FragmentTransaction?)
+* **Lịch sử:** Trước đây, để chuyển từ `Fragment A` sang `Fragment B`, lập trình viên phải gọi `FragmentManager`, viết lệnh `beginTransaction()`, gọi `replace()`, rồi `addToBackStack()`, và cuối cùng là `commit()`.
+* **Hậu quả (Vấn nạn Crash App):** * Rất dễ dính lỗi `IllegalStateException` kinh điển nếu vô tình gọi `commit()` sau khi Activity đã lưu trạng thái (`onSaveInstanceState`).
+  * Quản lý nút Back (Backstack) cực kỳ thủ công và rối rắm (Bấm back không thoát ra màn trước mà lại thoát luôn app).
+  * Mã nguồn "mì ý" (Spaghetti code) vì logic chuyển màn hình rải rác khắp nơi.
+
+#### 2. Kiến trúc 3 trụ cột của Navigation Component
+Để khắc phục toàn bộ nhược điểm trên, Google đóng gói hệ thống điều hướng thành 3 thành phần cốt lõi:
+
+* **NavGraph (`nav_graph.xml`):** Một file XML trực quan đóng vai trò là "Bản đồ tư duy". Nơi bạn kéo thả các Fragment và vẽ các mũi tên (Action) nối chúng lại với nhau. Bạn có thể nhìn lướt qua file này là hiểu ngay luồng đi của toàn bộ ứng dụng.
+* **NavHostFragment:** Là một "Khung chứa rỗng" (`FragmentContainerView`) được đặt cố định bên trong `MainActivity`. Nó đóng vai trò là sân khấu để các Fragment thay phiên nhau lên diễn.
+* **NavController:** Là "Bộ não điều khiển". Ở bất kỳ Fragment nào, bạn chỉ cần gọi `findNavController().navigate(R.id.action_A_to_B)`, hệ thống sẽ tự lo liệu mọi thứ (từ Animation chuyển cảnh, cho đến việc thêm màn hình A vào Backstack).
+
+#### 3. Phép màu Tích hợp UI (BottomNavigationView & DrawerLayout)
+* **Câu hỏi phỏng vấn:** *"Làm sao để kết nối cái thanh Bottom Navigation (hoặc Menu trượt Drawer) với các Fragment mà không cần dùng lệnh `switch-case` hay `if-else`?"*
+* **Bí kíp Senior (Quy tắc ID đồng nhất):** Trong kiến trúc mới, bạn không cần viết bất kỳ dòng logic chuyển trang thủ công nào khi bấm vào menu. Điều kiện tiên quyết duy nhất là: **ID của `<item>` trong file `menu.xml` BẮT BUỘC PHẢI TRÙNG KHỚP 100% với ID của `<fragment>` trong file `nav_graph.xml`.**
+
+**Thực chiến tích hợp (Chỉ với 2 dòng code trong Activity):**
+```kotlin
+override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    // ... khởi tạo binding ...
+
+    // 1. Tìm cái "Bộ não điều khiển" từ cái khung chứa rỗng
+    val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+    val navController = navHostFragment.navController
+
+    // 2. Gắn Thanh điều hướng dưới đáy (BottomNav) vào Bộ não
+    // Phép màu nằm ở đây: Nó tự động bắt sự kiện click, tự đổi màu icon, tự chuyển Fragment tương ứng.
+    binding.bottomNavigationView.setupWithNavController(navController)
+}
+```
+
+#### 4. Safe Args (Truyền dữ liệu không rủi ro)
+Khi chuyển từ màn hình Danh sách sang Chi tiết, ta thường phải gửi kèm một ID_Sản_Phẩm.
+* Cách cũ (Dùng Bundle): bundle.putString("KEY_ID", "123"). Nhược điểm là bên nhận rất dễ gõ sai chữ "KEY_ID" gây Crash app (lỗi Runtime).
+* Chuẩn mực hiện tại (Safe Args): Là một Plugin đi kèm với Navigation. Bạn khai báo biến id_san_pham trực tiếp vào bản đồ nav_graph.xml. Lúc biên dịch, hệ thống tự động sinh ra các Class code có sẵn hàm truyền/nhận chuẩn xác kiểu dữ liệu (Type-safe).
+
+* **Ví dụ code Safe Args thực tế:**
+```kotlin
+// BÊN GỬI (Fragment Danh Sách): Gọi hàm tự sinh, truyền thẳng ID vào, không lo gõ sai tên KEY
+val action = HomeFragmentDirections.actionHomeToDetail(productId = 123)
+findNavController().navigate(action)
+
+// BÊN NHẬN (Fragment Chi Tiết): Lấy dữ liệu an toàn 100%
+private val args: DetailFragmentArgs by navArgs()
+
+override fun onViewCreated(...) {
+    val idNhanDuoc = args.productId // Kiểu Int chuẩn xác, không bị Null
+    loadData(idNhanDuoc)
+}
+```
+
+---
